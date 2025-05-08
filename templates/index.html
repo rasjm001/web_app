@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malware Classification System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .header {
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e5e5;
+            margin-bottom: 2rem;
+        }
+        .card {
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Malware Classification System</h1>
+            <p class="lead">Upload your dataset, select models, analyze malware types, and perform attack simulations</p>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Upload Dataset</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="datafile" class="form-label">Select CSV file</label>
+                                <input class="form-control" type="file" id="datafile" name="datafile" accept=".csv">
+                                <div class="form-text">Dataset must include 'Category' and 'Class' columns</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Model Trainer</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('train_model') }}" method="post">
+                            <div class="mb-3">
+                                <label class="form-label">Choose models to train:</label>
+                                {% for clf_name in classifiers %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="models" id="model-{{ clf_name }}" value="{{ clf_name }}">
+                                    <label class="form-check-label" for="model-{{ clf_name }}">
+                                        {{ clf_name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-success">Train Selected Models</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Attack Simulation</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="{{ url_for('attack_simulation') }}" method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Select trained models to attack:</label>
+                                    {% for clf_name in attack_classifiers %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="attack_models" id="attack-model-{{ clf_name }}" 
+                                               value="{{ clf_name }}" {% if clf_name not in trained_models %}disabled{% endif %}>
+                                        <label class="form-check-label" for="attack-model-{{ clf_name }}">
+                                            {{ clf_name }} {% if clf_name not in trained_models %}(Not Trained){% endif %}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                    <div class="form-text">LogisticRegression will be trained automatically if needed for FGSM attack.</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Select epsilon values:</label>
+                                    {% for eps in epsilon_values %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="epsilons" id="eps-{{ eps }}" value="{{ eps }}">
+                                        <label class="form-check-label" for="eps-{{ eps }}">
+                                            {{ eps }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-danger">Run Attack Simulation</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>Upload your malware dataset CSV file (must contain 'Category' and 'Class' columns)</li>
+                            <li>Select one or more classification models to train</li>
+                            <li>Click 'Train Selected Models' to start the analysis</li>
+                            <li>View the results including feature importance and model performance metrics</li>
+                            <li>For attack simulation, select trained models and epsilon values, then click 'Run Attack Simulation'</li>
+                            <li>LogisticRegression will be trained automatically if needed for the attack</li>
+                            <li>View the attack simulation results, including adversarial samples</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
